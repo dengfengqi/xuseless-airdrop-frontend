@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3modal@3.5.0/dist/web3modal.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script type="module">
     import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js";
 
@@ -43,33 +45,49 @@
       btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
     }*/
 
+    const projectId = "xuseless"; // 去 WalletConnect Cloud 免费申请
+
+    const web3modal = new window.Web3Modal.Web3Modal({
+      projectId,
+      walletConnectVersion: 2,
+      chains: [{ id: 196, name: "XLayer", rpcUrl: "https://xlayerrpc.okx.com" }],
+      metadata: {
+        name: "XUSELESS Airdrop",
+        description: "Connect to OKX Wallet",
+        url: window.location.origin,
+        icons: ["https://xuseless-airdrop-frontend.netlify.app/icon.png"],
+      },
+    });
+
     async function connectWallet() {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
       try {
-        let provider;
+        if (isMobile) {
+          // 打开 WalletConnect 模态框
+          const provider = await web3modal.openModal();
 
-        if (window.okxwallet) {
-          provider = window.okxwallet;
-          console.log("检测到 OKX Wallet 插件");
-        } else if (window.ethereum) {
-          provider = window.ethereum;
-          console.log("检测到 MetaMask / EIP-1193 钱包");
+          // 生成 WalletConnect URI
+          const wcUri = provider.connector.uri;
+          const encodedUri = encodeURIComponent(wcUri);
+
+          // ✅ 使用 OKX App Deep Link 拉起钱包授权界面
+          window.location.href = `okx://wc?uri=${encodedUri}`;
+
+          // （OKX 授权完成后会自动回调网页）
         } else {
-          alert("未检测到钱包，请使用 OKX App 或钱包插件打开页面。");
-          return;
+          // 桌面端：直接连接插件钱包
+          const provider = await web3modal.openModal();
+          const ethersProvider = new ethers.BrowserProvider(provider);
+          const signer = await ethersProvider.getSigner();
+          const addr = await signer.getAddress();
+          alert("连接成功：" + addr);
         }
-
-        // 请求连接钱包
-        const accounts = await provider.request({ method: "eth_requestAccounts" });
-        const address = accounts[0];
-        console.log("钱包地址：", address);
-        alert("钱包连接成功：" + address);
-
       } catch (err) {
-        console.error("连接失败：", err);
-        alert("连接钱包失败，请重试！");
+        console.error("连接失败", err);
+        alert("连接失败，请重试");
       }
     }
-
 
     //主流程，提交参数
     async function submitTx() {
@@ -404,7 +422,7 @@
 <body>
   <div class="card">
     <h2>🚀 Xuseless Gas 空投</h2>
-    <p>请确认你在 dex 购买了10000枚以上XUSELESS后，提交交易哈希，gas将在5~10分钟内发放。
+    <p>请确认你在 dex 购买了10000枚以上XUSELESS后，提交交易哈希。
       <a href="#" id="buyLink" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
         点击购买
       </a>
