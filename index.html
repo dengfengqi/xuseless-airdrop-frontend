@@ -174,7 +174,7 @@
     }
 
     // 🔹 绑定“点击购买”链接逻辑
-    document.getElementById("buyLink").addEventListener("click", function (e) {
+    document.getElementById("buyLink").addEventListener("click",async function (e) {
       e.preventDefault();
 
       // XUSELESS 合约在 XLayer 的 OKX 交易链接
@@ -188,7 +188,7 @@
         alert(`合约地址已复制到剪贴板 ✅\n${tokenAddress}`);
       } catch (err) {
         console.error("复制失败:", err);
-        alert("复制合约地址失败，请手动复制。");
+        showToast("复制合约地址失败，请手动复制。");
       }
 
       const ua = navigator.userAgent.toLowerCase();
@@ -381,13 +381,15 @@
   <div class="card">
     <h2>🚀 Xuseless Gas 空投</h2>
     <p>请确认你在 dex 购买了10000枚以上XUSELESS后，提交交易哈希，gas将在5~10分钟内发放。
+    </p>
+    <p>
       <a href="#" id="buyLink" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
         点击复制合约地址并进入OKX购买
       </a>
       <br>
       <span style="font-size:14px; color:#555;">
         手动复制合约地址：
-        <a href="#" id="manualCopy" style="color:#4a90e2; text-decoration:none;">
+        <a href="#" id="manualCopy" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
           0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02
         </a>
       </span>
