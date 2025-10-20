@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>XLayer Gas 空投申请</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="module">
+    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js";
+
+    let signer, walletAddress, gasType = "XPL";
+
+    //钱包连接
+    async function connectWallet() {
+      const providerDetected = window.ethereum || window.okxwallet || window.okx;
+      if (!providerDetected) {
+        alert("请先安装 MetaMask 或 OKX Wallet 插件。");
+        return;
+      }
+      const provider = new ethers.BrowserProvider(providerDetected);
+      await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner();
+      walletAddress = await signer.getAddress();
+      document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)} 🔄`;
+
+      // 监听账户切换
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+          signer = null;
+          walletAddress = null;
+          document.getElementById("wallet-address").textContent = "未连接";
+          document.getElementById("connect-btn").textContent = "🔗 连接钱包";
+        } else {
+          walletAddress = accounts[0];
+          signer = provider.getSigner();
+          //document.getElementById("wallet-address").textContent = walletAddress;
+          document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)} 🔄`;
+        }
+      });
+
+      // 修改按钮文字，显示钱包名称或地址前后部分
+      const btn = document.getElementById("connect-btn");
+      btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
+      btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
+
+
+    }
+
+    //主流程，提交参数
+    async function submitTx() {
+      const txHash = document.getElementById("txHash").value.trim();
+      if (!txHash || !walletAddress) {
+        alert("请连接钱包并输入交易哈希");
+        return;
+      }
+
+      const overlay = document.getElementById("overlay");
+      const controls = document.querySelectorAll("button, input, .gas-option");
+
+      overlay.classList.add("active");
+      controls.forEach(el => el.disabled = true);
+
+      try {
+        const response = await fetch("https://xuseless.netlify.app/.netlify/functions/verifyAndSubmit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: walletAddress, txHash, gasType }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          alert(`提交失败 ❌: ${result.error || "未知错误"}`);
+        } else {
+          alert(`提交成功 ✅: ${result.message}`);
+          document.getElementById("txHash").value = "";
+        }
+      } catch (err) {
+        console.error(err);
+        alert("网络请求失败，请稍后再试");
+      } finally {
+        overlay.classList.remove("active");
+        controls.forEach(el => el.disabled = false);
+      }
+    }
+
+    //粘贴到交易哈希
+    async function pasteHash() {
+      const input = document.getElementById('txHash');
+      if (!navigator.clipboard) {
+        alert('当前环境不支持自动粘贴，请使用 Ctrl+V 手动粘贴');
+        return;
+      }
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text) {
+          alert('剪贴板中没有内容');
+          return;
+        }
+        input.value = text;
+      } catch (err) {
+        console.error(err);
+        alert('读取剪贴板失败，请检查浏览器权限（需HTTPS或localhost）');
+      }
+    }
+
+    // 发放空投的钱包地址（你自己的）
+    const AIRDROP_WALLETS = {
+      ETH: "0x592f51828160981dcece6b491c0fc68825d92249",
+      BASE_ETH: "0x592f51828160981dcece6b491c0fc68825d92249",
+      BNB: "0x592f51828160981dcece6b491c0fc68825d92249",
+      XPL: "0x592f51828160981dcece6b491c0fc68825d92249"
+    };
+
+    // 对应的 RPC 节点
+    const RPC_ENDPOINTS = {
+      ETH: "https://ethereum.publicnode.com",
+      BASE_ETH: "https://mainnet.base.org",
+      BNB: "https://bsc-dataseed.binance.org/",
+      XPL: "https://rpc.plasma.to",
+      OKB: "https://xlayerrpc.okx.com"
+    };
+
+    // 更新发放钱包余额
+    async function updateAirdropBalance() {
+      const targetAddress = AIRDROP_WALLETS[gasType];
+      const rpcUrl = RPC_ENDPOINTS[gasType];
+
+      if (!targetAddress || !rpcUrl) {
+        document.getElementById("wallet-balance").textContent = "未知网络";
+        return;
+      }
+
+      try {
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const balance = await provider.getBalance(targetAddress);
+
+        const formatted = Number(ethers.formatEther(balance)).toFixed(4);
+        document.getElementById("wallet-balance").textContent = formatted;
+
+        // 假设每人空投固定 0.000025 单位 Gas，估算可发放次数
+        const estimate = Math.floor(Number(formatted) / 0.000025);
+        document.getElementById("estimated-dispense").textContent = estimate;
+
+      } catch (err) {
+        console.error("查询发放钱包余额失败:", err);
+        document.getElementById("wallet-balance").textContent = "错误";
+      }
+    }
+
+    // 自动更新空投钱包余额
+    async function selectGasType(value) {
+      gasType = value;
+      document.querySelectorAll(".gas-option").forEach(el => el.classList.remove("selected"));
+      const current = document.getElementById("opt-" + value);
+      if (current) current.classList.add("selected");
+
+      await updateAirdropBalance();
+    }
+
+    // 🔹 绑定“点击购买”链接逻辑
+    document.getElementById("buyLink").addEventListener("click", function (e) {
+      e.preventDefault();
+
+      // XUSELESS 合约在 XLayer 的 OKX 交易链接
+      const okxWebUrl = "https://web3.okx.com/zh-hans/token/x-layer/0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02";
+      const okxAppUrl = "okx://web3/dex-swap/xlayer/0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02";
+
+      const ua = navigator.userAgent.toLowerCase();
+      const isMobile = /android|iphone|ipad|ipod/.test(ua);
+
+      if (isMobile) {
+        // ✅ 手机端 → 直接尝试打开 OKX App
+        window.location.href = okxAppUrl;
+        // ⏳ 如果用户没装 App，可以在几秒后自动回退到网页端
+        setTimeout(() => {
+          window.location.href = okxWebUrl;
+        }, 2000);
+      } else {
+        // ✅ 桌面端 → 打开 Web3 网页版交易界面
+        window.open(okxWebUrl, "_blank");
+      }
+    });
+
+
+    // 🔹 挂载到全局，HTML onclick 调用
+    window.connectWallet = connectWallet;
+    window.selectGasType = selectGasType;
+    window.submitTx = submitTx;
+    window.pasteHash = pasteHash;
+    window.addEventListener("load", async () => {
+      await selectGasType(gasType); // 默认选中 XPL
+    });
+  </script>
+
+
+
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: #fafafa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 480px;
+    }
+    button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #357ABD;
+    }
+    input {
+      width: 100%;
+       box-sizing: border-box;
+      padding: 10px 40px 10px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .wallet-box {
+      margin-bottom: 15px;
+      display: flex; 
+      justify-content: flex-end;
+    }
+    .gas-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+      justify-content: space-between;
+    }
+    .gas-option {
+      flex: 0 1 calc(33.333% - 10px);
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .gas-option:hover {
+      background: #f3f7ff;
+      border-color: #4a90e2;
+    }
+    .gas-option.selected {
+      background: #e6f0ff;
+      border-color: #4a90e2;
+      color: #1a4ea3;
+      font-weight: bold;
+    }
+    .single-btn {
+      width: 100%;
+    }
+    .input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .paste-btn {
+      position: absolute;
+      right: 3px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 0px;
+    }
+
+    label {
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 8px; /* 控制 label 与下方元素间距 */
+      font-weight: 500;
+    }
+    #overlay {
+      display: none; /* 初始隐藏 */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.3);
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+
+    #overlay.active {
+      display: flex; /* 点击提交时显示 */
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>🚀 Xuseless Gas 空投</h2>
+    <p>请确认你在 dex 购买了10000枚以上XUSELESS后，提交交易哈希，gas将在5~10分钟内发放。
+      <a href="#" id="buyLink" style="
+        color:#4a90e2; 
+        font-weight:bold; 
+        text-decoration:none; 
+        margin-left:6px;">点击购买</a>
+    </p>
+
+    <div class="wallet-box">
+      <button id="connect-btn" onclick="connectWallet()">🔗 连接钱包</button>
+    </div>
+
+    <label for="txHash">交易哈希：</label>
+    <div class="input-wrapper">
+      <input id="txHash" type="text" placeholder="请输入交易哈希">
+      <button class="paste-btn" onclick="pasteHash()">粘贴</button>
+    </div>
+
+    <label>选择空投的 Gas 类型：</label>
+    <div class="gas-options">
+      <div id="opt-BASE_ETH" class="gas-option" onclick="selectGasType('BASE_ETH')">Base ETH</div>
+      <div id="opt-BNB" class="gas-option" onclick="selectGasType('BNB')">BNB</div>
+      <div id="opt-XPL" class="gas-option" onclick="selectGasType('XPL')">XPL</div>
+    </div>
+    <p>剩余 Gas: <span id="wallet-balance">0</span></p>
+    <p>预计可发放次数: <span id="estimated-dispense">0</span></p>
+    <button class="single-btn" onclick="submitTx()">📤 提交申请</button>
+  </div>
+  <div id="overlay">
+    提交中，请稍候...
+  </div>
+
+
+
+</body>
+</html>
