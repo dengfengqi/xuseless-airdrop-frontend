@@ -9,7 +9,7 @@
 
     let signer, walletAddress, gasType = "XPL";
 
-    //钱包连接
+    /*/钱包连接
     async function connectWallet() {
       const providerDetected = window.ethereum || window.okxwallet || window.okx;
       if (!providerDetected) {
@@ -41,9 +41,35 @@
       const btn = document.getElementById("connect-btn");
       btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
       btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
+    }*/
 
+    async function connectWallet() {
+      try {
+        let provider;
 
+        if (window.okxwallet) {
+          provider = window.okxwallet;
+          console.log("检测到 OKX Wallet 插件");
+        } else if (window.ethereum) {
+          provider = window.ethereum;
+          console.log("检测到 MetaMask / EIP-1193 钱包");
+        } else {
+          alert("未检测到钱包，请使用 OKX App 或钱包插件打开页面。");
+          return;
+        }
+
+        // 请求连接钱包
+        const accounts = await provider.request({ method: "eth_requestAccounts" });
+        const address = accounts[0];
+        console.log("钱包地址：", address);
+        alert("钱包连接成功：" + address);
+
+      } catch (err) {
+        console.error("连接失败：", err);
+        alert("连接钱包失败，请重试！");
+      }
     }
+
 
     //主流程，提交参数
     async function submitTx() {
@@ -185,10 +211,8 @@
        // ✅ 尝试复制到剪贴板
       try {
         await navigator.clipboard.writeText(tokenAddress);
-        alert(`合约地址已复制到剪贴板 ✅\n${tokenAddress}`);
       } catch (err) {
         console.error("复制失败:", err);
-        showToast("复制合约地址失败，请手动复制。");
       }
 
       const ua = navigator.userAgent.toLowerCase();
@@ -381,13 +405,11 @@
   <div class="card">
     <h2>🚀 Xuseless Gas 空投</h2>
     <p>请确认你在 dex 购买了10000枚以上XUSELESS后，提交交易哈希，gas将在5~10分钟内发放。
-    </p>
-    <p>
       <a href="#" id="buyLink" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
-        点击复制合约地址并进入OKX购买
+        点击购买
       </a>
       <br>
-      <span style="font-size:14px; color:#555;">
+      <span>
         手动复制合约地址：
         <a href="#" id="manualCopy" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
           0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02
