@@ -157,13 +157,39 @@
       await updateAirdropBalance();
     }
 
+    // ✅ Toast 提示函数
+    function showToast(message, type = "success") {
+      const toast = document.createElement("div");
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      document.body.appendChild(toast);
+
+      // 动画显示
+      setTimeout(() => toast.classList.add("show"), 50);
+      // 3秒后自动消失
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
     // 🔹 绑定“点击购买”链接逻辑
     document.getElementById("buyLink").addEventListener("click", function (e) {
       e.preventDefault();
 
       // XUSELESS 合约在 XLayer 的 OKX 交易链接
+      const tokenAddress = "0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02";
       const okxWebUrl = "https://web3.okx.com/zh-hans/token/x-layer/0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02";
       const okxAppUrl = "https://web3.okx.com/dex-swap?chain=xlayer&token=0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02";
+      
+       // ✅ 尝试复制到剪贴板
+      try {
+        await navigator.clipboard.writeText(tokenAddress);
+        alert(`合约地址已复制到剪贴板 ✅\n${tokenAddress}`);
+      } catch (err) {
+        console.error("复制失败:", err);
+        alert("复制合约地址失败，请手动复制。");
+      }
 
       const ua = navigator.userAgent.toLowerCase();
       const isMobile = /android|iphone|ipad|ipod/.test(ua);
@@ -181,6 +207,18 @@
       }
     });
 
+    // ✅ 手动复制合约地址
+    document.getElementById("manualCopy").addEventListener("click", async function (e) {
+      e.preventDefault();
+      const tokenAddress = "0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02";
+      try {
+        await navigator.clipboard.writeText(tokenAddress);
+        showToast("✅ 合约地址已复制");
+      } catch (err) {
+        console.error("复制失败:", err);
+        showToast("⚠️ 复制失败，请手动复制", "error");
+      }
+    });
 
     // 🔹 挂载到全局，HTML onclick 调用
     window.connectWallet = connectWallet;
@@ -272,7 +310,6 @@
       position: relative;
       width: 100%;
     }
-
     .paste-btn {
       position: absolute;
       right: 3px;
@@ -286,6 +323,29 @@
       cursor: pointer;
       font-size: 13px;
       margin-top: 0px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      background: #4a90e2;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 2000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.error {
+      background: #d9534f;
     }
 
     label {
@@ -321,12 +381,18 @@
   <div class="card">
     <h2>🚀 Xuseless Gas 空投</h2>
     <p>请确认你在 dex 购买了10000枚以上XUSELESS后，提交交易哈希，gas将在5~10分钟内发放。
-      <a href="#" id="buyLink" style="
-        color:#4a90e2; 
-        font-weight:bold; 
-        text-decoration:none; 
-        margin-left:6px;">点击购买</a>
+      <a href="#" id="buyLink" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
+        点击复制合约地址并进入OKX购买
+      </a>
+      <br>
+      <span style="font-size:14px; color:#555;">
+        手动复制合约地址：
+        <a href="#" id="manualCopy" style="color:#4a90e2; text-decoration:none;">
+          0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02
+        </a>
+      </span>
     </p>
+
 
     <div class="wallet-box">
       <button id="connect-btn" onclick="connectWallet()">🔗 连接钱包</button>
