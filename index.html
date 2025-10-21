@@ -4,16 +4,10 @@
   <meta charset="UTF-8">
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script>
-    // 修复 process is not defined 错误
-    window.process = {
-      env: {
-        NODE_ENV: 'production',
-        WALLETCONNECT_PROJECT_ID: '310356f4b71b2f49dee3048bcf68240d'
-      }
-    };
-  </script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
+  <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.11.1/dist/index.umd.min.js"></script>
+
 
   <style>
     body {
@@ -203,6 +197,12 @@
 
   <script>
 
+    window.process = {
+      env: {
+        NODE_ENV: 'production'
+      }
+    };
+
     let signer, walletAddress, gasType = "XPL";
 
     /*/浏览器插件钱包连接
@@ -244,15 +244,15 @@
         package: window.WalletConnectProvider?.default || window.WalletConnectProvider,
         options: {
           projectId: "310356f4b71b2f49dee3048bcf68240d", 
-          chains: [195], // XLayer chainId
+          chains: [196], // XLayer chainId
           rpcMap: {
-            195: "https://xlayerrpc.okx.com"
+            196: "https://xlayerrpc.okx.com"
           },
-          showQrModal: true,
-          qrModalOptions: {
-            themeVariables: {
-              '--wcm-z-index': '9999'
-            }
+          metadata: {
+            name: "Xuseless Gas Airdrop",
+            description: "XLayer Gas 空投申请",
+            url: "https://xuseless.netlify.app",
+            icons: ["https://xuseless.netlify.app/icon.png"]
           }
         }
       }
@@ -265,15 +265,6 @@
       cacheProvider: true,
       providerOptions
     });*/
-    // 初始化 Web3Modal
-    const Web3Modal = window.Web3Modal?.default || window.Web3Modal;
-    const web3Modal = new Web3Modal({
-      cacheProvider: true,
-      providerOptions,
-      themeVariables: {
-        '--w3m-z-index': '9999'
-      }
-    });
 
     async function connectWallet() {
       // 1️⃣ 尝试浏览器插件钱包
