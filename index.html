@@ -80,13 +80,84 @@
           const provider = await web3modal.openModal();
           const ethersProvider = new ethers.BrowserProvider(provider);
           const signer = await ethersProvider.getSigner();
-          const addr = await signer.getAddress();
-          alert("连接成功：" + addr);
+          walletAddress = await signer.getAddress();
+          document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
+          document.getElementById("connect-btn").disabled = true;
+
+          // 监听账户切换
+          if (window.ethereum) {
+              window.ethereum.on('accountsChanged', async (accounts) => {
+                  if (accounts.length === 0) {
+                      signer = null;
+                      walletAddress = null;
+                      document.getElementById("connect-btn").textContent = "🔗 连接钱包";
+                      document.getElementById("connect-btn").disabled = false;
+                  } else {
+                      walletAddress = accounts[0];
+                      signer = ethersProvider.getSigner();
+                      document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
+                  }
+              });
+          }
         }
       } catch (err) {
         console.error("连接失败", err);
         alert("连接失败，请重试");
       }
+    }
+
+    // 发放空投的钱包地址（你自己的）
+    const AIRDROP_WALLETS = {
+      ETH: "0x592f51828160981dcece6b491c0fc68825d92249",
+      BASE_ETH: "0x592f51828160981dcece6b491c0fc68825d92249",
+      BNB: "0x592f51828160981dcece6b491c0fc68825d92249",
+      XPL: "0x592f51828160981dcece6b491c0fc68825d92249"
+    };
+
+    // 对应的 RPC 节点
+    const RPC_ENDPOINTS = {
+      ETH: "https://ethereum.publicnode.com",
+      BASE_ETH: "https://mainnet.base.org",
+      BNB: "https://bsc-dataseed.binance.org/",
+      XPL: "https://rpc.plasma.to",
+      OKB: "https://xlayerrpc.okx.com"
+    };
+
+    // 更新发放钱包余额
+    async function updateAirdropBalance() {
+      const targetAddress = AIRDROP_WALLETS[gasType];
+      const rpcUrl = RPC_ENDPOINTS[gasType];
+
+      if (!targetAddress || !rpcUrl) {
+        document.getElementById("wallet-balance").textContent = "未知网络";
+        return;
+      }
+
+      try {
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const balance = await provider.getBalance(targetAddress);
+
+        const formatted = Number(ethers.formatEther(balance)).toFixed(4);
+        document.getElementById("wallet-balance").textContent = formatted;
+
+        // 假设每人空投固定 0.000025 单位 Gas，估算可发放次数
+        const estimate = Math.floor(Number(formatted) / 0.000025);
+        document.getElementById("estimated-dispense").textContent = estimate;
+
+      } catch (err) {
+        console.error("查询发放钱包余额失败:", err);
+        document.getElementById("wallet-balance").textContent = "错误";
+      }
+    }
+
+    // 自动更新空投钱包余额
+    async function selectGasType(value) {
+      gasType = value;
+      document.querySelectorAll(".gas-option").forEach(el => el.classList.remove("selected"));
+      const current = document.getElementById("opt-" + value);
+      if (current) current.classList.add("selected");
+
+      await updateAirdropBalance();
     }
 
     //主流程，提交参数
@@ -147,59 +218,7 @@
       }
     }
 
-    // 发放空投的钱包地址（你自己的）
-    const AIRDROP_WALLETS = {
-      ETH: "0x592f51828160981dcece6b491c0fc68825d92249",
-      BASE_ETH: "0x592f51828160981dcece6b491c0fc68825d92249",
-      BNB: "0x592f51828160981dcece6b491c0fc68825d92249",
-      XPL: "0x592f51828160981dcece6b491c0fc68825d92249"
-    };
-
-    // 对应的 RPC 节点
-    const RPC_ENDPOINTS = {
-      ETH: "https://ethereum.publicnode.com",
-      BASE_ETH: "https://mainnet.base.org",
-      BNB: "https://bsc-dataseed.binance.org/",
-      XPL: "https://rpc.plasma.to",
-      OKB: "https://xlayerrpc.okx.com"
-    };
-
-    // 更新发放钱包余额
-    async function updateAirdropBalance() {
-      const targetAddress = AIRDROP_WALLETS[gasType];
-      const rpcUrl = RPC_ENDPOINTS[gasType];
-
-      if (!targetAddress || !rpcUrl) {
-        document.getElementById("wallet-balance").textContent = "未知网络";
-        return;
-      }
-
-      try {
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
-        const balance = await provider.getBalance(targetAddress);
-
-        const formatted = Number(ethers.formatEther(balance)).toFixed(4);
-        document.getElementById("wallet-balance").textContent = formatted;
-
-        // 假设每人空投固定 0.000025 单位 Gas，估算可发放次数
-        const estimate = Math.floor(Number(formatted) / 0.000025);
-        document.getElementById("estimated-dispense").textContent = estimate;
-
-      } catch (err) {
-        console.error("查询发放钱包余额失败:", err);
-        document.getElementById("wallet-balance").textContent = "错误";
-      }
-    }
-
-    // 自动更新空投钱包余额
-    async function selectGasType(value) {
-      gasType = value;
-      document.querySelectorAll(".gas-option").forEach(el => el.classList.remove("selected"));
-      const current = document.getElementById("opt-" + value);
-      if (current) current.classList.add("selected");
-
-      await updateAirdropBalance();
-    }
+    
 
     // ✅ Toast 提示函数
     function showToast(message, type = "success") {
@@ -216,6 +235,16 @@
         setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
+
+    // 🔹 挂载到全局，HTML onclick 调用
+        window.addEventListener("load", async () => {
+          await selectGasType(gasType); // 默认选中 XPL
+        });
+
+        window.connectWallet = connectWallet;
+        window.selectGasType = selectGasType;
+        window.submitTx = submitTx;
+        window.pasteHash = pasteHash;
 
     // 🔹 绑定“点击购买”链接逻辑
     document.getElementById("buyLink").addEventListener("click",async function (e) {
@@ -262,14 +291,7 @@
       }
     });
 
-    // 🔹 挂载到全局，HTML onclick 调用
-    window.connectWallet = connectWallet;
-    window.selectGasType = selectGasType;
-    window.submitTx = submitTx;
-    window.pasteHash = pasteHash;
-    window.addEventListener("load", async () => {
-      await selectGasType(gasType); // 默认选中 XPL
-    });
+    
   </script>
 
 
