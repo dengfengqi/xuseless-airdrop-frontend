@@ -234,8 +234,10 @@
     // 连接钱包（桌面插件钱包 + 移动 WalletConnect）
     async function connectWallet() {
       try {
+        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
         // 1️⃣ 桌面插件钱包
-        if (window.ethereum) {
+        if (!isMobile && window.ethereum) {
           provider = new ethers.BrowserProvider(window.ethereum);
           await provider.send("eth_requestAccounts", []);
           signer = await provider.getSigner();
