@@ -177,7 +177,7 @@
 
 
     <div class="wallet-box">
-      <button id="connect-btn" onclick="connectWallet()">🔗 连接钱包</button>
+      <button id="connect-btn" >🔗 连接钱包</button>
     </div>
 
     <label for="txHash">交易哈希：</label>
@@ -524,6 +524,16 @@
 
     window.addEventListener("load", onPageLoad);
     document.getElementById("connect-btn").addEventListener("click", connectWallet);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("connect-btn");
+      btn.addEventListener("click", () => {
+        console.log("按钮点击 ✅");
+        alert("按钮点击 ✅");
+        connectWallet();
+      });
+    });
+
   </script>
 
 
