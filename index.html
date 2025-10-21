@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script type="module">
+  <!--<script>
     // 提供一个最简单的 process 对象，防止库报错
     window.process = window.process || { env: { NODE_ENV: 'production' } };
-  </script>
+  </script>-->
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal-sign-html@2.7.0/dist/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal-sign-html@2.6.2/dist/index.min.js"></script>
  <!--<script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.11.1/dist/index.umd.min.js"></script>--> 
 
@@ -454,9 +454,9 @@
     window.selectGasType = selectGasType;
     window.submitTx = submitTx;
     window.pasteHash = pasteHash;
-    window.onPageLoad = onPageLoad; // ✅ 挂载 onPageLoad
+    //window.onPageLoad = onPageLoad; // ✅ 挂载 onPageLoad
 
-    window.addEventListener("load", onPageLoad);
+    //window.addEventListener("load", onPageLoad);
     document.getElementById("connect-btn").addEventListener("click", connectWallet);
 
     document.addEventListener("DOMContentLoaded", () => {
