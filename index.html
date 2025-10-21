@@ -311,6 +311,8 @@
         
         // 跳转唤起 OKX App
         window.location.href = okxLink;
+        } catch (err) {
+        console.error("移动端连接失败:", err);
       }
         // 页面加载时检查 URL 是否带 wallet 地址
       async function onPageLoad() {
@@ -482,16 +484,7 @@
       }, 3000);
     }
 
-    // 🔹 挂载到全局，HTML onclick 调用
-        window.addEventListener("load", async () => {
-          await selectGasType(gasType); // 默认选中 XPL
-        });
-        window.connectWallet = connectWallet;
-        window.selectGasType = selectGasType;
-        window.submitTx = submitTx;
-        window.pasteHash = pasteHash;
-        window.addEventListener("load", onPageLoad);
-
+    
     // 🔹 绑定“点击购买”链接逻辑
     document.getElementById("buyLink").addEventListener("click",async function (e) {
       e.preventDefault();
@@ -537,7 +530,15 @@
       }
     });
 
-    
+    // 🔹 挂载到全局，HTML onclick 调用
+    window.addEventListener("load", async () => {
+      await selectGasType(gasType); // 默认选中 XPL
+    });
+    window.connectWallet = connectWallet;
+    window.selectGasType = selectGasType;
+    window.submitTx = submitTx;
+    window.pasteHash = pasteHash;
+    window.addEventListener("load", onPageLoad);
   </script>
 
 
