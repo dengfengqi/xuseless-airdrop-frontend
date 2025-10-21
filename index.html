@@ -8,7 +8,196 @@
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/web3modal@1.9.8/dist/index.js"></script>
 
-   <script>
+
+
+
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: #fafafa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 480px;
+    }
+    button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #357ABD;
+    }
+    input {
+      width: 100%;
+       box-sizing: border-box;
+      padding: 10px 40px 10px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .wallet-box {
+      margin-bottom: 15px;
+      display: flex; 
+      justify-content: flex-end;
+    }
+    .gas-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+      justify-content: space-between;
+    }
+    .gas-option {
+      flex: 0 1 calc(33.333% - 10px);
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .gas-option:hover {
+      background: #f3f7ff;
+      border-color: #4a90e2;
+    }
+    .gas-option.selected {
+      background: #e6f0ff;
+      border-color: #4a90e2;
+      color: #1a4ea3;
+      font-weight: bold;
+    }
+    .single-btn {
+      width: 100%;
+    }
+    .input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .paste-btn {
+      position: absolute;
+      right: 3px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 0px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      background: #4a90e2;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 2000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.error {
+      background: #d9534f;
+    }
+
+    label {
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 8px; /* 控制 label 与下方元素间距 */
+      font-weight: 500;
+    }
+    #overlay {
+      display: none; /* 初始隐藏 */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.3);
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+
+    #overlay.active {
+      display: flex; /* 点击提交时显示 */
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>🚀 Xuseless Gas 空投</h2>
+    <p>请确认你在 dex 购买了10000枚以上XUSELESS后，提交交易哈希。
+      <a href="#" id="buyLink" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
+        点击购买
+      </a>
+      <br>
+      <span>
+        手动复制合约地址：
+        <a href="#" id="manualCopy" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
+          0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02
+        </a>
+      </span>
+    </p>
+
+
+    <div class="wallet-box">
+      <button id="connect-btn" onclick="connectWallet()">🔗 连接钱包</button>
+    </div>
+
+    <label for="txHash">交易哈希：</label>
+    <div class="input-wrapper">
+      <input id="txHash" type="text" placeholder="请输入交易哈希">
+      <button class="paste-btn" onclick="pasteHash()">粘贴</button>
+    </div>
+
+    <label>选择空投的 Gas 类型：</label>
+    <div class="gas-options">
+      <div id="opt-BASE_ETH" class="gas-option" onclick="selectGasType('BASE_ETH')">Base ETH</div>
+      <div id="opt-BNB" class="gas-option" onclick="selectGasType('BNB')">BNB</div>
+      <div id="opt-XPL" class="gas-option" onclick="selectGasType('XPL')">XPL</div>
+    </div>
+    <p>剩余 Gas: <span id="wallet-balance">0</span></p>
+    <p>预计可发放次数: <span id="estimated-dispense">0</span></p>
+    <button class="single-btn" onclick="submitTx()">📤 提交申请</button>
+  </div>
+  <div id="overlay">
+    提交中，请稍候...
+  </div>
+
+     <script>
 
     let signer, walletAddress, gasType = "XPL";
 
@@ -278,195 +467,6 @@
 
     
   </script>
-
-
-
-  <style>
-    body {
-      font-family: "Segoe UI", Roboto, sans-serif;
-      background: #fafafa;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-    }
-    .card {
-      background: #fff;
-      padding: 20px 30px;
-      border-radius: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 480px;
-    }
-    button {
-      background-color: #4a90e2;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 15px;
-      margin-top: 10px;
-    }
-    button:hover {
-      background-color: #357ABD;
-    }
-    input {
-      width: 100%;
-       box-sizing: border-box;
-      padding: 10px 40px 10px 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    .wallet-box {
-      margin-bottom: 15px;
-      display: flex; 
-      justify-content: flex-end;
-    }
-    .gas-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 16px;
-      justify-content: space-between;
-    }
-    .gas-option {
-      flex: 0 1 calc(33.333% - 10px);
-      box-sizing: border-box;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      text-align: center;
-      padding: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-      user-select: none;
-    }
-    .gas-option:hover {
-      background: #f3f7ff;
-      border-color: #4a90e2;
-    }
-    .gas-option.selected {
-      background: #e6f0ff;
-      border-color: #4a90e2;
-      color: #1a4ea3;
-      font-weight: bold;
-    }
-    .single-btn {
-      width: 100%;
-    }
-    .input-wrapper {
-      position: relative;
-      width: 100%;
-    }
-    .paste-btn {
-      position: absolute;
-      right: 3px;
-      top: 50%;
-      transform: translateY(-50%);
-      background-color: #4a90e2;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      margin-top: 0px;
-    }
-    .toast {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%) translateY(30px);
-      background: #4a90e2;
-      color: white;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-size: 14px;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.3s ease;
-      z-index: 2000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-    .toast.error {
-      background: #d9534f;
-    }
-
-    label {
-      display: block;
-      margin-top: 8px;
-      margin-bottom: 8px; /* 控制 label 与下方元素间距 */
-      font-weight: 500;
-    }
-    #overlay {
-      display: none; /* 初始隐藏 */
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.3);
-      z-index: 1000;
-      backdrop-filter: blur(2px);
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 20px;
-    }
-
-    #overlay.active {
-      display: flex; /* 点击提交时显示 */
-    }
-
-  </style>
-</head>
-
-<body>
-  <div class="card">
-    <h2>🚀 Xuseless Gas 空投</h2>
-    <p>请确认你在 dex 购买了10000枚以上XUSELESS后，提交交易哈希。
-      <a href="#" id="buyLink" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
-        点击购买
-      </a>
-      <br>
-      <span>
-        手动复制合约地址：
-        <a href="#" id="manualCopy" style="color:#4a90e2; font-weight:bold; text-decoration:none; margin-left:6px;">
-          0x6375d4ed218f7c0ec7e8245ba368206eef5d5b02
-        </a>
-      </span>
-    </p>
-
-
-    <div class="wallet-box">
-      <button id="connect-btn" onclick="connectWallet()">🔗 连接钱包</button>
-    </div>
-
-    <label for="txHash">交易哈希：</label>
-    <div class="input-wrapper">
-      <input id="txHash" type="text" placeholder="请输入交易哈希">
-      <button class="paste-btn" onclick="pasteHash()">粘贴</button>
-    </div>
-
-    <label>选择空投的 Gas 类型：</label>
-    <div class="gas-options">
-      <div id="opt-BASE_ETH" class="gas-option" onclick="selectGasType('BASE_ETH')">Base ETH</div>
-      <div id="opt-BNB" class="gas-option" onclick="selectGasType('BNB')">BNB</div>
-      <div id="opt-XPL" class="gas-option" onclick="selectGasType('XPL')">XPL</div>
-    </div>
-    <p>剩余 Gas: <span id="wallet-balance">0</span></p>
-    <p>预计可发放次数: <span id="estimated-dispense">0</span></p>
-    <button class="single-btn" onclick="submitTx()">📤 提交申请</button>
-  </div>
-  <div id="overlay">
-    提交中，请稍候...
-  </div>
-
 
 
 </body>
