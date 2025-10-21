@@ -45,27 +45,32 @@
       btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
       btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
     }*/
-    const projectId = "310356f4b71b2f49dee3048bcf68240d"; //WalletConnect
-    const metadata= {
-      name: "XUSELESS Airdrop",
-      description: "Connect to OKX Wallet",
-      url: window.location.origin,
-      icons: ["https://xuseless-airdrop-frontend.netlify.app/icon.png"],
-    };
-    const web3modal = new window.Web3Modal.createWeb3Modal({
-      projectId,
-      walletConnectVersion: 2,
-      chains: [{ id: 196, name: "XLayer", rpcUrl: "https://xlayerrpc.okx.com" }],
-      metadata,
-    });
+      let web3modal;
 
+      // 初始化 Web3Modal
+      function initWeb3Modal() {
+
+        const projectId = "310356f4b71b2f49dee3048bcf68240d"; //WalletConnect
+        const metadata= {
+          name: "XUSELESS Airdrop",
+          description: "Connect to OKX Wallet",
+          url: window.location.origin,
+          icons: ["https://xuseless-airdrop-frontend.netlify.app/icon.png"],
+        };
+        const web3modal = new window.Web3Modal({
+          projectId,
+          walletConnectVersion: 2,
+          chains: [{ id: 196, name: "XLayer", rpcUrl: "https://xlayerrpc.okx.com" }],
+          metadata,
+        });
+      }
     async function connectWallet() {
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
       try {
         if (isMobile) {
           // 打开 WalletConnect 模态框
-          const provider = await web3modal.openModal();
+          const provider = await web3modal.open();
 
           // 生成 WalletConnect URI
           const wcUri = provider.connector.uri;
@@ -77,7 +82,7 @@
           // （OKX 授权完成后会自动回调网页）
         } else {
           // 桌面端：直接连接插件钱包
-          const provider = await web3modal.openModal();
+          const provider = await web3modal.open();
           const ethersProvider = new ethers.BrowserProvider(provider);
           const signer = await ethersProvider.getSigner();
           walletAddress = await signer.getAddress();
