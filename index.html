@@ -10,7 +10,13 @@
   </script>-->
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
- <!--<script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
+  <script type="module">
+    import { WalletConnectModalSign } from "https://cdn.jsdelivr.net/npm/@walletconnect/modal-sign-html@2.7.0/dist/index.js?module";
+
+    const modal = new WalletConnectModalSign({ projectId: "310356f4b71b2f49dee3048bcf68240d" });
+    console.log(modal);
+  </script>
+  <!--<script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.11.1/dist/index.umd.min.js"></script>--> 
 
 
@@ -200,9 +206,7 @@
     提交中，请稍候...
   </div>
 
-  <script type="module">
-    import WalletConnectModalSign from "https://cdn.jsdelivr.net/npm/@walletconnect/modal-sign-html@2.6.2/dist/index.min.js";
-
+  <script>
     let provider, signer, walletAddress, gasType = "XPL";
       
     const projectId = "310356f4b71b2f49dee3048bcf68240d";
