@@ -222,11 +222,12 @@
         // ✅ 桌面端优先使用插件钱包
         if (!isMobile() && window.ethereum) {
           console.log("🖥️ 检测到浏览器插件钱包，使用 EIP-1193 provider");
-          const provider = new ethers.BrowserProvider(window.ethereum);
+          provider = new ethers.providers.Web3Provider(window.ethereum);
           await provider.send("eth_requestAccounts", []);
-          const signer = await provider.getSigner();
-          const address = await signer.getAddress();
-          alert("✅ 插件钱包连接成功：" + address);
+          signer = provider.getSigner();
+          walletAddress = await signer.getAddress();
+          alert("✅ 插件钱包连接成功：" + walletAddress);
+          updateConnectBtn(walletAddress);
           return;
         }
 
@@ -302,7 +303,7 @@
         const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
         const balance = await provider.getBalance(targetAddress);
 
-        const formatted = Number(ethers.formatEther(balance)).toFixed(4);
+        const formatted = Number(ethers.utils.formatEther(balance)).toFixed(4);
         document.getElementById("wallet-balance").textContent = formatted;
 
         // 假设每人空投固定 0.000025 单位 Gas，估算可发放次数
