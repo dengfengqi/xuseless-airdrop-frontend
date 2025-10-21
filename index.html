@@ -342,12 +342,6 @@
         }
       }
       
-      // 修改按钮文字，显示钱包名称或地址前后部分
-      const btn = document.getElementById("connect-btn");
-      btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-      btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
-    }
-
     document.getElementById("connect-btn").addEventListener("click", connectWallet);
 
     // 发放空投的钱包地址（你自己的）
