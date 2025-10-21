@@ -5,11 +5,8 @@
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/web3modal@1.9.8/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@web3modal/standalone@1.19.12/dist/index.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.11.1/dist/index.umd.min.js"></script>
-
-
-
 
 
   <style>
@@ -198,8 +195,14 @@
     提交中，请稍候...
   </div>
 
-     <script>
+  <script>
 
+    window.process = {
+      env: {
+        NODE_ENV: 'production'
+      }
+    };
+    
     let signer, walletAddress, gasType = "XPL";
 
     /*/浏览器插件钱包连接
@@ -274,10 +277,7 @@
           document.getElementById("connect-btn").textContent = walletAddress;
           showToast("PC 钱包连接成功：" + walletAddress);
 
-          // 修改按钮文字，显示钱包名称或地址前后部分
-          const btn = document.getElementById("connect-btn");
-          btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-          btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
+          
 
           // 监听账户切换
           window.ethereum.on('accountsChanged', (accounts) => {
@@ -289,6 +289,11 @@
               document.getElementById("connect-btn").textContent = "未连接";
             }
           });
+          
+          // 修改按钮文字，显示钱包名称或地址前后部分
+          const btn = document.getElementById("connect-btn");
+          btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
+          btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
           return; // 已连接插件钱包，不需要 WalletConnect
         } catch (err) {
           console.error("插件钱包连接失败:", err);
@@ -304,10 +309,7 @@
         document.getElementById("connect-btn").textContent = walletAddress;
         showToast("移动端 WalletConnect 连接成功：" + walletAddress);
 
-        // 修改按钮文字，显示钱包名称或地址前后部分
-        const btn = document.getElementById("connect-btn");
-        btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-        btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
+        
 
         // 监听账户切换
         provider.on("accountsChanged", (accounts) => {
@@ -319,6 +321,11 @@
             document.getElementById("connect-btn").textContent = "未连接";
           }
         });
+        
+        // 修改按钮文字，显示钱包名称或地址前后部分
+        const btn = document.getElementById("connect-btn");
+        btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
+        btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
 
       } catch (err) {
         console.error("WalletConnect 连接失败:", err);
