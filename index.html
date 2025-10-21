@@ -262,17 +262,17 @@
           await provider.send("eth_requestAccounts", []);
           signer = await provider.getSigner();
           walletAddress = await signer.getAddress();
-          document.getElementById("wallet-address").textContent = walletAddress;
+          document.getElementById("connect-btn").textContent = walletAddress;
           alert("PC 钱包连接成功：" + walletAddress);
 
           // 监听账户切换
           window.ethereum.on('accountsChanged', (accounts) => {
             if (accounts.length > 0) {
               walletAddress = accounts[0];
-              document.getElementById("wallet-address").textContent = walletAddress;
+              document.getElementById("connect-btn").textContent = walletAddress;
             } else {
               walletAddress = null;
-              document.getElementById("wallet-address").textContent = "未连接";
+              document.getElementById("connect-btn").textContent = "未连接";
             }
           });
           return; // 已连接插件钱包，不需要 WalletConnect
@@ -287,17 +287,17 @@
         const ethersProvider = new ethers.BrowserProvider(provider);
         signer = await ethersProvider.getSigner();
         walletAddress = await signer.getAddress();
-        document.getElementById("wallet-address").textContent = walletAddress;
+        document.getElementById("connect-btn").textContent = walletAddress;
         alert("移动端 WalletConnect 连接成功：" + walletAddress);
 
         // 监听账户切换
         provider.on("accountsChanged", (accounts) => {
           if (accounts.length > 0) {
             walletAddress = accounts[0];
-            document.getElementById("wallet-address").textContent = walletAddress;
+            document.getElementById("connect-btn").textContent = walletAddress;
           } else {
             walletAddress = null;
-            document.getElementById("wallet-address").textContent = "未连接";
+            document.getElementById("connect-btn").textContent = "未连接";
           }
         });
 
