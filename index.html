@@ -282,7 +282,7 @@
           window.ethereum.on('accountsChanged', (accounts) => {
             if (accounts.length > 0) {
               walletAddress = accounts[0];
-              document.getElementById("connect-btn").textContent = walletAddress;
+              document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
             } else {
               walletAddress = null;
               document.getElementById("connect-btn").textContent = "未连接";
@@ -301,11 +301,12 @@
 
       // 2️⃣ 插件钱包不可用 → 使用 WalletConnect
       try {
-        const provider = await web3Modal.connect();
-        const ethersProvider = new ethers.BrowserProvider(provider);
-        signer = await ethersProvider.getSigner();
-        walletAddress = await signer.getAddress();
-        document.getElementById("connect-btn").textContent = walletAddress;
+        const dappUrl = encodeURIComponent("https://dengfengqi.github.io/xuseless-airdrop-frontend");
+        const callbackUrl = encodeURIComponent("https://dengfengqi.github.io/xuseless-airdrop-frontend/callback");
+        const chainId = 196; // XLayer
+        const okxLink = `okx://wallet/connect?dapp_url=${dappUrl}&callback_url=${callbackUrl}&network=${chainId}`;
+        window.location.href = okxLink;
+        document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
         showToast("移动端 WalletConnect 连接成功：" + walletAddress);
 
         
@@ -314,7 +315,7 @@
         provider.on("accountsChanged", (accounts) => {
           if (accounts.length > 0) {
             walletAddress = accounts[0];
-            document.getElementById("connect-btn").textContent = walletAddress;
+            document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
           } else {
             walletAddress = null;
             document.getElementById("connect-btn").textContent = "未连接";
