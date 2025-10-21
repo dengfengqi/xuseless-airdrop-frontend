@@ -4,13 +4,12 @@
   <meta charset="UTF-8">
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.jsdelivr.net/npm/@web3modal/standalone@2.4.2/dist/index.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
-  <script>
-    //import { Web3Modal } from "https://cdn.jsdelivr.net/npm/@web3modal/standalone@2.4.3/dist/index.esm.min.js";
-    //import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js";
+   <script type="module">
+    import { ethers } from './node_modules/ethers/dist/ethers.esm.min.js';
+    import Web3Modal from './node_modules/web3modal/dist/index.js';
+    import WalletConnectProvider from './node_modules/@walletconnect/web3-provider/dist/umd/index.min.js';
 
-    let signer, walletAddress, gasType = "XPL";
+    let provider, signer, walletAddress, gasType = "XPL";
 
     /*/浏览器插件钱包连接
     async function connectWallet() {
@@ -45,71 +44,52 @@
       btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
       btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
     }*/
-      let web3modal;
-
-      // 初始化 Web3Modal
-      function initWeb3Modal() {
-
-        const projectId = "310356f4b71b2f49dee3048bcf68240d"; //WalletConnect
-        const metadata= {
-          name: "XUSELESS Airdrop",
-          description: "Connect to OKX Wallet",
-          url: window.location.origin,
-          icons: ["https://xuseless-airdrop-frontend.netlify.app/icon.png"],
-        };
-        const web3modal = new window.Web3Modal({
-          projectId,
-          walletConnectVersion: 2,
-          chains: [{ id: 196, name: "XLayer", rpcUrl: "https://xlayerrpc.okx.com" }],
-          metadata,
-        });
-      }
-    async function connectWallet() {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      try {
-        if (isMobile) {
-          // 打开 WalletConnect 模态框
-          const provider = await web3modal.open();
-
-          // 生成 WalletConnect URI
-          const wcUri = provider.connector.uri;
-          const encodedUri = encodeURIComponent(wcUri);
-
-          // ✅ 使用 OKX App Deep Link 拉起钱包授权界面
-          window.location.href = `okx://wc?uri=${encodedUri}`;
-
-          // （OKX 授权完成后会自动回调网页）
-        } else {
-          // 桌面端：直接连接插件钱包
-          const provider = await web3modal.open();
-          const ethersProvider = new ethers.BrowserProvider(provider);
-          const signer = await ethersProvider.getSigner();
-          walletAddress = await signer.getAddress();
-          document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-          document.getElementById("connect-btn").disabled = true;
-
-          // 监听账户切换
-          if (window.ethereum) {
-              window.ethereum.on('accountsChanged', async (accounts) => {
-                  if (accounts.length === 0) {
-                      signer = null;
-                      walletAddress = null;
-                      document.getElementById("connect-btn").textContent = "🔗 连接钱包";
-                      document.getElementById("connect-btn").disabled = false;
-                  } else {
-                      walletAddress = accounts[0];
-                      signer = ethersProvider.getSigner();
-                      document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-                  }
-              });
-          }
+    // 配置 WalletConnect 支持 XLayer
+    const providerOptions = {
+      walletconnect: {
+        package: WalletConnectProvider,
+        options: {
+          rpc: {
+            196: "https://xlayerrpc.okx.com"
+          },
+          qrcode: true
         }
+      }
+    };
+
+     // 初始化 Web3Modal
+    const web3Modal = new Web3Modal({
+      cacheProvider: true,
+      providerOptions
+    });
+
+    async function connectWallet() {
+      try {
+        provider = await web3Modal.connect(); // 弹出选择钱包模态框
+        const ethersProvider = new ethers.BrowserProvider(provider);
+        signer = await ethersProvider.getSigner();
+        walletAddress = await signer.getAddress();
+        document.getElementById('wallet-address').textContent = walletAddress;
+
+        // 监听账户切换
+        provider.on("accountsChanged", (accounts) => {
+          if (accounts.length > 0) {
+            walletAddress = accounts[0];
+            document.getElementById('wallet-address').textContent = walletAddress;
+          } else {
+            walletAddress = null;
+            document.getElementById('wallet-address').textContent = "未连接";
+          }
+        });
+
+        alert("连接成功：" + walletAddress);
       } catch (err) {
         console.error("连接失败", err);
         alert("连接失败，请重试");
       }
     }
+
+    document.getElementById('connect-btn').addEventListener('click', connectWallet);
 
     // 发放空投的钱包地址（你自己的）
     const AIRDROP_WALLETS = {
