@@ -332,10 +332,15 @@
     
       // 缩写按钮地址
       function updateConnectBtn(address) {
-    const btn = document.getElementById("connect-btn");
-    btn.textContent = `已连接: ${address.slice(0,6)}...${address.slice(-4)}`;
-    btn.disabled = true; // 可选：连接后禁用按钮
-}
+        const btn = document.getElementById("connect-btn");
+        if (address && address.length > 0) {
+            btn.textContent = `已连接: ${address.slice(0,6)}...${address.slice(-4)}`;
+            btn.disabled = true; // 可选：连接后禁用按钮
+        } else {
+            btn.textContent = "未连接";
+            btn.disabled = false; // 未连接时允许点击
+        }
+      }
       
       // 修改按钮文字，显示钱包名称或地址前后部分
       const btn = document.getElementById("connect-btn");
