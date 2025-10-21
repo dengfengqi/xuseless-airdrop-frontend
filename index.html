@@ -234,10 +234,11 @@
       btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
       btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
     }*/
+   
     // 配置 WalletConnect 支持 XLayer
     const providerOptions = {
       walletconnect: {
-        package: window.WalletConnectProvider,
+        package: window.WalletConnectProvider.default || window.WalletConnectProvider
         options: {
           rpc: {
             196: "https://xlayerrpc.okx.com"
@@ -247,7 +248,8 @@
     };
 
      // 初始化 Web3Modal
-    const web3Modal = new window.Web3Modal({
+    const Web3ModalConstructor = window.Web3Modal.default || window.Web3Modal;
+    const web3Modal = new Web3ModalConstructor({
       cacheProvider: true,
       providerOptions
     });
