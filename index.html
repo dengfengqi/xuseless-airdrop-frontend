@@ -237,7 +237,7 @@
     // 配置 WalletConnect 支持 XLayer
     const providerOptions = {
       walletconnect: {
-        package: window.WalletConnectProvider.default,
+        package: window.WalletConnectProvider,
         options: {
           rpc: {
             196: "https://xlayerrpc.okx.com"
@@ -247,7 +247,7 @@
     };
 
      // 初始化 Web3Modal
-    const web3Modal = new window.Web3Modal.default({
+    const web3Modal = new window.Web3Modal({
       cacheProvider: true,
       providerOptions
     });
