@@ -234,10 +234,31 @@
     // 连接钱包（桌面插件钱包 + 移动 WalletConnect）
     async function connectWallet() {
       try {
-        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+        const ua = navigator.userAgent.toLowerCase();
+        const isMobile = /android|iphone|ipad|ipod/i.test(ua);
+        if (isMobile) {
+            //  移动端 WalletConnect 2.0
+          provider = await web3Modal.connect();
+          const web3Provider = new ethers.BrowserProvider(provider);
+          signer = await web3Provider.getSigner();
+          walletAddress = await signer.getAddress();
+          updateConnectBtn(walletAddress);
 
-        // 1️⃣ 桌面插件钱包
-        if (!isMobile && window.ethereum) {
+          provider.on("accountsChanged", (accounts) => {
+            walletAddress = accounts.length ? accounts[0] : null;
+            updateConnectBtn(walletAddress);
+          });
+
+          provider.on("disconnect", () => {
+            walletAddress = null;
+            signer = null;
+            updateConnectBtn(null);
+          });
+          return;
+        }
+
+        //  桌面插件钱包
+        if (window.ethereum) {
           provider = new ethers.BrowserProvider(window.ethereum);
           await provider.send("eth_requestAccounts", []);
           signer = await provider.getSigner();
@@ -255,25 +276,7 @@
           });
           return;
         }
-
-        // 2️⃣ 移动端 WalletConnect 2.0
-        provider = await web3Modal.connect();
-        const web3Provider = new ethers.BrowserProvider(provider);
-        signer = await web3Provider.getSigner();
-        walletAddress = await signer.getAddress();
-        updateConnectBtn(walletAddress);
-
-        provider.on("accountsChanged", (accounts) => {
-          walletAddress = accounts.length ? accounts[0] : null;
-          updateConnectBtn(walletAddress);
-        });
-
-        provider.on("disconnect", () => {
-          walletAddress = null;
-          signer = null;
-          updateConnectBtn(null);
-        });
-
+        showtoast("未检测到钱包，请安装 MetaMask 或 OKX Wallet 插件 / App");
       } catch (err) {
         console.error("连接钱包失败:", err);
         alert("钱包连接失败，请检查环境或网络");
