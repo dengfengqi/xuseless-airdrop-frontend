@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3modal@3.5.0/dist/web3modal.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script type="module">
     import Web3Modal from "https://cdn.jsdelivr.net/npm/@walletconnect/web3modal@3.5.0/dist/web3modal.min.js";
-    //import Web3Modal from "https://cdn.jsdelivr.net/npm/@walletconnect/web3modal@3.5.0/dist/web3modal.min.js";
     import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js";
 
     let signer, walletAddress, gasType = "XPL";
+
     /*/浏览器插件钱包连接
     async function connectWallet() {
       const providerDetected = window.ethereum || window.okxwallet || window.okx;
