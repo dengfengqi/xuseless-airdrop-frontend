@@ -267,6 +267,8 @@
 
     // 连接钱包（桌面插件钱包 + 移动 WalletConnect）
     async function connectWallet() {
+      console.log("connectWallet triggered ✅");
+      alert("connectWallet triggered ✅"); // 移动端确认按钮被点击
       try {
         // 1️⃣ 桌面插件钱包
         if (window.ethereum) {
