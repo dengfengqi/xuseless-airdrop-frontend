@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // 提供一个最简单的 process 对象，防止库报错
+    window.process = window.process || { env: { NODE_ENV: 'production' } };
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.11.1/dist/index.umd.min.js"></script>
@@ -196,12 +201,6 @@
   </div>
 
   <script>
-
-    window.process = {
-      env: {
-        NODE_ENV: 'production'
-      }
-    };
 
     let signer, walletAddress, gasType = "XPL";
 
