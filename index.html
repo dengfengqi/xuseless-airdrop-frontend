@@ -11,7 +11,7 @@
 
     let signer, walletAddress, gasType = "XPL";
 
-    /*/钱包连接
+    /*/浏览器插件钱包连接
     async function connectWallet() {
       const providerDetected = window.ethereum || window.okxwallet || window.okx;
       if (!providerDetected) {
@@ -44,19 +44,18 @@
       btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
       btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
     }*/
-
-    const projectId = "xuseless"; // 去 WalletConnect Cloud 免费申请
-
+    const projectId = "310356f4b71b2f49dee3048bcf68240d"; //WalletConnect
+    const metadata= {
+      name: "XUSELESS Airdrop",
+      description: "Connect to OKX Wallet",
+      url: window.location.origin,
+      icons: ["https://xuseless-airdrop-frontend.netlify.app/icon.png"],
+    };
     const web3modal = new window.Web3Modal.Web3Modal({
       projectId,
       walletConnectVersion: 2,
       chains: [{ id: 196, name: "XLayer", rpcUrl: "https://xlayerrpc.okx.com" }],
-      metadata: {
-        name: "XUSELESS Airdrop",
-        description: "Connect to OKX Wallet",
-        url: window.location.origin,
-        icons: ["https://xuseless-airdrop-frontend.netlify.app/icon.png"],
-      },
+      metadata,
     });
 
     async function connectWallet() {
