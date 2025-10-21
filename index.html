@@ -258,12 +258,12 @@
     };
 
 
-     /*/ 初始化 Web3Modal
+     // 初始化 Web3Modal
     const Web3ModalConstructor = window.Web3Modal.default || window.Web3Modal;
     const web3Modal = new Web3ModalConstructor({
       cacheProvider: true,
       providerOptions
-    });*/
+    });
 
     async function connectWallet() {
       // 1️⃣ 尝试浏览器插件钱包
@@ -273,26 +273,22 @@
           await provider.send("eth_requestAccounts", []);
           signer = await provider.getSigner();
           walletAddress = await signer.getAddress();
-          document.getElementById("connect-btn").textContent = walletAddress;
-          showToast("PC 钱包连接成功：" + walletAddress);
+          updateConnectBtn(walletAddress);
 
           
 
           // 监听账户切换
-          window.ethereum.on('accountsChanged', (accounts) => {
-            if (accounts.length > 0) {
-              walletAddress = accounts[0];
-              document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-            } else {
+          window.ethereum.on("accountsChanged", async (accounts) => {
+            if (accounts.length === 0) {
               walletAddress = null;
-              document.getElementById("connect-btn").textContent = "未连接";
+              signer = null;
+            } else {
+              walletAddress = accounts[0];
+              signer = provider.getSigner();
             }
+            updateConnectBtn(walletAddress);
           });
           
-          // 修改按钮文字，显示钱包名称或地址前后部分
-          const btn = document.getElementById("connect-btn");
-          btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-          btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
           return; // 已连接插件钱包，不需要 WalletConnect
         } catch (err) {
           console.error("插件钱包连接失败:", err);
@@ -316,20 +312,15 @@
       }
     }
     
-    // 页面加载时检查 URL 是否带 wallet 地址
+    // 页面加载时，自动检查缓存 WalletConnect 连接
     async function onPageLoad() {
-      const params = new URLSearchParams(window.location.search);
-      const walletFromCallback = params.get("address");
-
-      if (walletFromCallback) {
-        walletAddress = walletFromCallback;
-        document.getElementById("connect-btn").textContent =
-          `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-        showToast("移动端 WalletConnect 连接成功：" + walletAddress);
+      if (web3Modal.cachedProvider) {
+        await connectWallet();
       }
 
       await selectGasType(gasType); // 默认选中 XPL
-    
+    }
+
       // 缩写按钮地址
       function updateConnectBtn(address) {
         const btn = document.getElementById("connect-btn");
@@ -341,7 +332,7 @@
             btn.disabled = false; // 未连接时允许点击
         }
       }
-    }  
+    
     document.getElementById("connect-btn").addEventListener("click", connectWallet);
 
     // 发放空投的钱包地址（你自己的）
@@ -394,7 +385,6 @@
       document.querySelectorAll(".gas-option").forEach(el => el.classList.remove("selected"));
       const current = document.getElementById("opt-" + value);
       if (current) current.classList.add("selected");
-
       await updateAirdropBalance();
     }
 
@@ -529,7 +519,9 @@
     window.submitTx = submitTx;
     window.pasteHash = pasteHash;
     window.onPageLoad = onPageLoad; // ✅ 挂载 onPageLoad
+
     window.addEventListener("load", onPageLoad);
+    document.getElementById("connect-btn").addEventListener("click", connectWallet);
   </script>
 
 
