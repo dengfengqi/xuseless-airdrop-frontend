@@ -490,6 +490,7 @@
         window.selectGasType = selectGasType;
         window.submitTx = submitTx;
         window.pasteHash = pasteHash;
+        window.addEventListener("load", onPageLoad);
 
     // 🔹 绑定“点击购买”链接逻辑
     document.getElementById("buyLink").addEventListener("click",async function (e) {
