@@ -9,9 +9,10 @@
     window.process = window.process || { env: { NODE_ENV: 'production' } };
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
-  <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.11.1/dist/index.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/modal-sign-html@2.7.0/dist/index.min.js"></script>
+ <!--<script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.11.1/dist/index.umd.min.js"></script>--> 
 
 
   <style>
@@ -204,86 +205,60 @@
 
     let provider, signer, walletAddress, gasType = "XPL";
       
-    const providerOptions = {
-      walletconnect: {
-        package: window.WalletConnectProvider?.default || window.WalletConnectProvider,
-        options: {
-          projectId: "310356f4b71b2f49dee3048bcf68240d", 
-          chains: [196], // XLayer chainId
-          rpcMap: {
-            196: "https://xlayerrpc.okx.com"
-          },
-          metadata: {
-            name: "Xuseless Gas Airdrop",
-            description: "XLayer Gas 空投申请",
-            url: "https://xuseless.netlify.app",
-            icons: ["https://xuseless.netlify.app/icon.png"]
-          },
-          showQrModal: false, // 不显示 QR，直接尝试跳转 App
-          mobileLinks: ["okxwallet"] // 告诉 WalletConnect 支持拉起 OKX Wallet App
-        }
-      }
-    };
+    const projectId = "310356f4b71b2f49dee3048bcf68240d";
+const metadata = {
+  name: "Xuseless Gas Airdrop",
+  description: "XLayer Gas 空投申请",
+  url: "https://xuseless.netlify.app",
+  icons: ["https://xuseless.netlify.app/icon.png"]
+};
 
+function isMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
 
-     // 初始化 Web3Modal
-    const Web3ModalConstructor = window.Web3Modal.default || window.Web3Modal;
-    const web3Modal = new Web3ModalConstructor({
-      cacheProvider: true,
-      providerOptions
+async function connectWallet() {
+  try {
+    // ✅ 桌面端优先使用插件钱包
+    if (!isMobile() && window.ethereum) {
+      console.log("🖥️ 检测到浏览器插件钱包，使用 EIP-1193 provider");
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      alert("✅ 插件钱包连接成功：" + address);
+      return;
+    }
+
+    // ✅ 移动端 / 无插件：使用 WalletConnect 2.0
+    console.log("📱 使用 WalletConnectModalSign 唤起 App");
+    const modal = new window.WalletConnectModalSign.WalletConnectModalSign({
+      projectId,
+      metadata,
+      themeMode: "light"
     });
 
-    // 连接钱包（桌面插件钱包 + 移动 WalletConnect）
-    async function connectWallet() {
-      try {
-        const ua = navigator.userAgent.toLowerCase();
-        const isMobile = /android|iphone|ipad|ipod/i.test(ua);
-        if (isMobile) {
-            //  移动端 WalletConnect 2.0
-          provider = await web3Modal.connect();
-          const web3Provider = new ethers.BrowserProvider(provider);
-          signer = await web3Provider.getSigner();
-          walletAddress = await signer.getAddress();
-          updateConnectBtn(walletAddress);
-
-          provider.on("accountsChanged", (accounts) => {
-            walletAddress = accounts.length ? accounts[0] : null;
-            updateConnectBtn(walletAddress);
-          });
-
-          provider.on("disconnect", () => {
-            walletAddress = null;
-            signer = null;
-            updateConnectBtn(null);
-          });
-          return;
+    const session = await modal.connect({
+      requiredNamespaces: {
+        eip155: {
+          methods: ["eth_sendTransaction", "personal_sign"],
+          chains: ["eip155:196"],
+          events: ["accountsChanged", "chainChanged"]
         }
-
-        //  桌面插件钱包
-        if (window.ethereum) {
-          provider = new ethers.BrowserProvider(window.ethereum);
-          await provider.send("eth_requestAccounts", []);
-          signer = await provider.getSigner();
-          walletAddress = await signer.getAddress();
-          updateConnectBtn(walletAddress);
-
-          window.ethereum.on("accountsChanged", async (accounts) => {
-            if (accounts.length === 0) {
-              walletAddress = null; signer = null;
-            } else {
-              walletAddress = accounts[0];
-              signer = provider.getSigner();
-            }
-            updateConnectBtn(walletAddress);
-          });
-          return;
-        }
-        showtoast("未检测到钱包，请安装 MetaMask 或 OKX Wallet 插件 / App");
-      } catch (err) {
-        console.error("连接钱包失败:", err);
-        alert("钱包连接失败，请检查环境或网络");
       }
-    }
+    });
+
+    const account = session.namespaces.eip155.accounts[0].split(":")[2];
+    alert("✅ WalletConnect 连接成功：" + account);
+
+  } catch (err) {
+    console.error("❌ 连接失败:", err);
+    alert("❌ 连接失败：" + err.message);
+  }
+}
+
+document.getElementById("connect-btn").addEventListener("click", connectWallet);
+
     
     // 页面加载时，自动检查缓存 WalletConnect 连接
     async function onPageLoad() {
