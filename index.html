@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-   <script type="module">
-    import { ethers } from './node_modules/ethers/dist/ethers.esm.min.js';
-    import Web3Modal from './node_modules/web3modal/dist/index.js';
-    import WalletConnectProvider from './node_modules/@walletconnect/web3-provider/dist/umd/index.min.js';
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web3modal@1.9.8/dist/index.js"></script>
 
-    let provider, signer, walletAddress, gasType = "XPL";
+   <script>
+
+    let signer, walletAddress, gasType = "XPL";
 
     /*/浏览器插件钱包连接
     async function connectWallet() {
@@ -47,25 +48,24 @@
     // 配置 WalletConnect 支持 XLayer
     const providerOptions = {
       walletconnect: {
-        package: WalletConnectProvider,
+        package: window.WalletConnectProvider.default,
         options: {
           rpc: {
             196: "https://xlayerrpc.okx.com"
-          },
-          qrcode: true
+          }
         }
       }
     };
 
      // 初始化 Web3Modal
-    const web3Modal = new Web3Modal({
+    const web3Modal = new window.Web3Modal.default({
       cacheProvider: true,
       providerOptions
     });
 
     async function connectWallet() {
       try {
-        provider = await web3Modal.connect(); // 弹出选择钱包模态框
+        const provider = await web3Modal.connect(); // 弹出选择钱包模态框
         const ethersProvider = new ethers.BrowserProvider(provider);
         signer = await ethersProvider.getSigner();
         walletAddress = await signer.getAddress();
