@@ -301,13 +301,31 @@
 
       // 2️⃣ 插件钱包不可用 → 使用 WalletConnect
       try {
-        const dappUrl = encodeURIComponent("https://dengfengqi.github.io/xuseless-airdrop-frontend");
-        const callbackUrl = encodeURIComponent("https://dengfengqi.github.io/xuseless-airdrop-frontend/callback");
+        const dappUrl = encodeURIComponent(window.location.href);
+        const callbackUrl = encodeURIComponent(window.location.href); // 同页面回调
         const chainId = 196; // XLayer
-        const okxLink = `okx://wallet/connect?dapp_url=${dappUrl}&callback_url=${callbackUrl}&network=${chainId}`;
+        const name = encodeURIComponent("Xuseless Gas Airdrop");
+        const description = encodeURIComponent("XLayer Gas 空投申请");
+        const icon = encodeURIComponent("https://xuseless.netlify.app/icon.png");
+        const okxLink = `okx://wallet/connect?dapp_url=${dappUrl}&callback_url=${callbackUrl}&network=${chainId}&name=${name}&description=${description}&icon=${icon}`;
+        
+        // 跳转唤起 OKX App
         window.location.href = okxLink;
-        document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-        showToast("移动端 WalletConnect 连接成功：" + walletAddress);
+      }
+        // 页面加载时检查 URL 是否带 wallet 地址
+      async function onPageLoad() {
+        const params = new URLSearchParams(window.location.search);
+        const walletFromCallback = params.get("address");
+
+        if (walletFromCallback) {
+          walletAddress = walletFromCallback;
+          document.getElementById("connect-btn").textContent =
+            `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
+          showToast("移动端 WalletConnect 连接成功：" + walletAddress);
+        }
+
+        await selectGasType(gasType); // 默认选中 XPL
+      }
 
         
 
@@ -327,10 +345,7 @@
         btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
         btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
 
-      } catch (err) {
-        console.error("WalletConnect 连接失败:", err);
-        showToast("连接失败，请确认钱包App已安装并扫码授权");
-      }
+      
       
       
     }
@@ -471,7 +486,6 @@
         window.addEventListener("load", async () => {
           await selectGasType(gasType); // 默认选中 XPL
         });
-
         window.connectWallet = connectWallet;
         window.selectGasType = selectGasType;
         window.submitTx = submitTx;
