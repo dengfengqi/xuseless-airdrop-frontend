@@ -203,41 +203,7 @@
   <script>
 
     let provider, signer, walletAddress, gasType = "XPL";
-
-    /*/浏览器插件钱包连接
-    async function connectWallet() {
-      const providerDetected = window.ethereum || window.okxwallet || window.okx;
-      if (!providerDetected) {
-        alert("请先安装 MetaMask 或 OKX Wallet 插件。");
-        return;
-      }
-      const provider = new ethers.BrowserProvider(providerDetected);
-      await provider.send("eth_requestAccounts", []);
-      signer = await provider.getSigner();
-      walletAddress = await signer.getAddress();
-      document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)} 🔄`;
-
-      // 监听账户切换
-      window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length === 0) {
-          signer = null;
-          walletAddress = null;
-          document.getElementById("wallet-address").textContent = "未连接";
-          document.getElementById("connect-btn").textContent = "🔗 连接钱包";
-        } else {
-          walletAddress = accounts[0];
-          signer = provider.getSigner();
-          //document.getElementById("wallet-address").textContent = walletAddress;
-          document.getElementById("connect-btn").textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)} 🔄`;
-        }
-      });
-
-      // 修改按钮文字，显示钱包名称或地址前后部分
-      const btn = document.getElementById("connect-btn");
-      btn.textContent = `已连接: ${walletAddress.slice(0,6)}...${walletAddress.slice(-4)}`;
-      btn.disabled = true; // 可选：连接后禁用按钮，防止重复点击
-    }*/
-   
+      
     const providerOptions = {
       walletconnect: {
         package: window.WalletConnectProvider?.default || window.WalletConnectProvider,
@@ -267,8 +233,6 @@
 
     // 连接钱包（桌面插件钱包 + 移动 WalletConnect）
     async function connectWallet() {
-      console.log("connectWallet triggered ✅");
-      alert("connectWallet triggered ✅"); // 移动端确认按钮被点击
       try {
         // 1️⃣ 桌面插件钱包
         if (window.ethereum) {
