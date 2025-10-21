@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>XLayer Gas 空投申请</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script>
+  <script type="module">
     // 提供一个最简单的 process 对象，防止库报错
     window.process = window.process || { env: { NODE_ENV: 'production' } };
   </script>
@@ -206,80 +206,68 @@
     let provider, signer, walletAddress, gasType = "XPL";
       
     const projectId = "310356f4b71b2f49dee3048bcf68240d";
-const metadata = {
-  name: "Xuseless Gas Airdrop",
-  description: "XLayer Gas 空投申请",
-  url: "https://xuseless.netlify.app",
-  icons: ["https://xuseless.netlify.app/icon.png"]
-};
+    const metadata = {
+      name: "Xuseless Gas Airdrop",
+      description: "XLayer Gas 空投申请",
+      url: "https://xuseless.netlify.app",
+      icons: ["https://xuseless.netlify.app/icon.png"]
+    };
 
-function isMobile() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-async function connectWallet() {
-  try {
-    // ✅ 桌面端优先使用插件钱包
-    if (!isMobile() && window.ethereum) {
-      console.log("🖥️ 检测到浏览器插件钱包，使用 EIP-1193 provider");
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-      alert("✅ 插件钱包连接成功：" + address);
-      return;
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     }
 
-    // ✅ 移动端 / 无插件：使用 WalletConnect 2.0
-    console.log("📱 使用 WalletConnectModalSign 唤起 App");
-    const modal = new window.WalletConnectModalSign.WalletConnectModalSign({
-      projectId,
-      metadata,
-      themeMode: "light"
-    });
-
-    const session = await modal.connect({
-      requiredNamespaces: {
-        eip155: {
-          methods: ["eth_sendTransaction", "personal_sign"],
-          chains: ["eip155:196"],
-          events: ["accountsChanged", "chainChanged"]
+    async function connectWallet() {
+      try {
+        // ✅ 桌面端优先使用插件钱包
+        if (!isMobile() && window.ethereum) {
+          console.log("🖥️ 检测到浏览器插件钱包，使用 EIP-1193 provider");
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          const signer = await provider.getSigner();
+          const address = await signer.getAddress();
+          alert("✅ 插件钱包连接成功：" + address);
+          return;
         }
+
+        // ✅ 移动端 / 无插件：使用 WalletConnect 2.0
+        console.log("📱 使用 WalletConnectModalSign 唤起 App");
+        const modal = new window.WalletConnectModalSign.WalletConnectModalSign({
+          projectId,
+          metadata,
+          themeMode: "light"
+        });
+
+        const session = await modal.connect({
+          requiredNamespaces: {
+            eip155: {
+              methods: ["eth_sendTransaction", "personal_sign"],
+              chains: ["eip155:196"],
+              events: ["accountsChanged", "chainChanged"]
+            }
+          }
+        });
+
+        const account = session.namespaces.eip155.accounts[0].split(":")[2];
+        alert("✅ WalletConnect 连接成功：" + account);
+
+      } catch (err) {
+        console.error("❌ 连接失败:", err);
+        alert("❌ 连接失败：" + err.message);
       }
-    });
-
-    const account = session.namespaces.eip155.accounts[0].split(":")[2];
-    alert("✅ WalletConnect 连接成功：" + account);
-
-  } catch (err) {
-    console.error("❌ 连接失败:", err);
-    alert("❌ 连接失败：" + err.message);
-  }
-}
-
-document.getElementById("connect-btn").addEventListener("click", connectWallet);
-
-    
-    // 页面加载时，自动检查缓存 WalletConnect 连接
-    async function onPageLoad() {
-      if (web3Modal.cachedProvider) {
-        await connectWallet();
-      }
-
-      await selectGasType(gasType); // 默认选中 XPL
     }
 
-      // 缩写按钮地址函数定义
-      function updateConnectBtn(address) {
-        const btn = document.getElementById("connect-btn");
-        if (address && address.length > 0) {
-            btn.textContent = `已连接: ${address.slice(0,6)}...${address.slice(-4)}`;
-            btn.disabled = true; // 可选：连接后禁用按钮
-        } else {
-            btn.textContent = "未连接";
-            btn.disabled = false; // 未连接时允许点击
-        }
+    // 缩写按钮地址函数定义
+    function updateConnectBtn(address) {
+      const btn = document.getElementById("connect-btn");
+      if (address && address.length > 0) {
+          btn.textContent = `已连接: ${address.slice(0,6)}...${address.slice(-4)}`;
+          btn.disabled = true; // 可选：连接后禁用按钮
+      } else {
+          btn.textContent = "未连接";
+          btn.disabled = false; // 未连接时允许点击
       }
+    }
     
     document.getElementById("connect-btn").addEventListener("click", connectWallet);
 
@@ -311,7 +299,7 @@ document.getElementById("connect-btn").addEventListener("click", connectWallet);
       }
 
       try {
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
         const balance = await provider.getBalance(targetAddress);
 
         const formatted = Number(ethers.formatEther(balance)).toFixed(4);
