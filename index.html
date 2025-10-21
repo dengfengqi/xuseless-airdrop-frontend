@@ -202,7 +202,7 @@
 
   <script>
 
-    let signer, walletAddress, gasType = "XPL";
+    let provider, signer, walletAddress, gasType = "XPL";
 
     /*/浏览器插件钱包连接
     async function connectWallet() {
@@ -265,50 +265,50 @@
       providerOptions
     });
 
+    // 连接钱包（桌面插件钱包 + 移动 WalletConnect）
     async function connectWallet() {
-      // 1️⃣ 尝试浏览器插件钱包
-      if (window.ethereum) {
-        try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
+      try {
+        // 1️⃣ 桌面插件钱包
+        if (window.ethereum) {
+          provider = new ethers.BrowserProvider(window.ethereum);
           await provider.send("eth_requestAccounts", []);
           signer = await provider.getSigner();
           walletAddress = await signer.getAddress();
           updateConnectBtn(walletAddress);
 
-          
-
-          // 监听账户切换
           window.ethereum.on("accountsChanged", async (accounts) => {
             if (accounts.length === 0) {
-              walletAddress = null;
-              signer = null;
+              walletAddress = null; signer = null;
             } else {
               walletAddress = accounts[0];
               signer = provider.getSigner();
             }
             updateConnectBtn(walletAddress);
           });
-          
-          return; // 已连接插件钱包，不需要 WalletConnect
-        } catch (err) {
-          console.error("插件钱包连接失败:", err);
+          return;
         }
-      }
 
-      // 2️⃣ 插件钱包不可用 → 使用 WalletConnect
-      try {
-        const dappUrl = encodeURIComponent(window.location.href);
-        const callbackUrl = encodeURIComponent(window.location.href); // 同页面回调
-        const chainId = 196; // XLayer
-        const name = encodeURIComponent("Xuseless Gas Airdrop");
-        const description = encodeURIComponent("XLayer Gas 空投申请");
-        const icon = encodeURIComponent("https://xuseless.netlify.app/icon.png");
-        const okxLink = `okx://wallet/connect?dapp_url=${dappUrl}&callback_url=${callbackUrl}&network=${chainId}&name=${name}&description=${description}&icon=${icon}`;
-        
-        // 跳转唤起 OKX App
-        window.location.href = okxLink;
-        } catch (err) {
-        console.error("移动端连接失败:", err);
+        // 2️⃣ 移动端 WalletConnect 2.0
+        provider = await web3Modal.connect();
+        const web3Provider = new ethers.BrowserProvider(provider);
+        signer = await web3Provider.getSigner();
+        walletAddress = await signer.getAddress();
+        updateConnectBtn(walletAddress);
+
+        provider.on("accountsChanged", (accounts) => {
+          walletAddress = accounts.length ? accounts[0] : null;
+          updateConnectBtn(walletAddress);
+        });
+
+        provider.on("disconnect", () => {
+          walletAddress = null;
+          signer = null;
+          updateConnectBtn(null);
+        });
+
+      } catch (err) {
+        console.error("连接钱包失败:", err);
+        alert("钱包连接失败，请检查环境或网络");
       }
     }
     
@@ -321,7 +321,7 @@
       await selectGasType(gasType); // 默认选中 XPL
     }
 
-      // 缩写按钮地址
+      // 缩写按钮地址函数定义
       function updateConnectBtn(address) {
         const btn = document.getElementById("connect-btn");
         if (address && address.length > 0) {
