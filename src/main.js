@@ -123,10 +123,10 @@ function updateConnectBtn(address, showDisconnect = false) {
 
 // 发放空投的钱包地址（你自己的）
 const AIRDROP_WALLETS = {
-  ETH: "0x592f51828160981dcece6b491c0fc68825d92249",
-  BASE_ETH: "0x592f51828160981dcece6b491c0fc68825d92249",
-  BNB: "0x592f51828160981dcece6b491c0fc68825d92249",
-  XPL: "0x592f51828160981dcece6b491c0fc68825d92249"
+  ETH: "0x1a07a4d3030ec162dabaab32ee9c1adadeef6197",
+  BASE_ETH: "0x1a07a4d3030ec162dabaab32ee9c1adadeef6197",
+  BNB: "0x1a07a4d3030ec162dabaab32ee9c1adadeef6197",
+  XPL: "0x1a07a4d3030ec162dabaab32ee9c1adadeef6197"
 };
 
 // 对应的 RPC 节点
