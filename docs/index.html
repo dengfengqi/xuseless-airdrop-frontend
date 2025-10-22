@@ -215,7 +215,7 @@
           await provider.send("eth_requestAccounts", []);
           signer = provider.getSigner();
           walletAddress = await signer.getAddress();
-          showtoast("✅ 插件钱包连接成功：" + walletAddress);
+          showToast("✅ 插件钱包连接成功：" + walletAddress);
           updateConnectBtn(walletAddress);
           return;
         }
