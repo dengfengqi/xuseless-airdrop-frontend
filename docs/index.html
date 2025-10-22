@@ -238,9 +238,21 @@
           }
         });
 
-        const account = session.namespaces.eip155.accounts[0].split(":")[2];
-        alert("✅ WalletConnect 连接成功：" + account);
+        walletAddress = session.namespaces.eip155.accounts[0].split(":")[2];
+        updateConnectBtn(walletAddress);
+        showToast("✅ WalletConnect 连接成功：" + walletAddress);
 
+        // 监听账户变化
+        session.on("accountsChanged", (accounts) => {
+          walletAddress = accounts[0].split(":")[2];
+          updateConnectBtn(walletAddress);
+        });
+
+        session.on("disconnect", () => {
+          walletAddress = null;
+          updateConnectBtn(walletAddress);
+        });
+        
       } catch (err) {
         console.error("❌ 连接失败:", err);
         alert("❌ 连接失败：" + err.message);
