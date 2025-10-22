@@ -43,13 +43,16 @@ async function connectWallet() {
 
     // ✅ 移动端 / 无插件：使用 WalletConnect 2.0
     console.log("📱 使用 WalletConnectModalSign 唤起 App");
-    const modal = new WalletConnectModalSign({
-      projectId,
-      metadata,
-      themeMode: "light"
-    });
+    // 全局 modal
+    if (!walletConnectModal) {
+      walletConnectModal = new WalletConnectModalSign({
+        projectId,
+        metadata,
+        themeMode: "light"
+      });
+    }
 
-    const session = await modal.connect({
+    const session = await walletConnectModal.connect({
       requiredNamespaces: {
         eip155: {
           methods: ["eth_sendTransaction", "personal_sign"],
@@ -276,12 +279,8 @@ document.getElementById("manualCopy").addEventListener("click", async function (
 
 // 🔹 挂载到全局，HTML onclick 调用
 window.addEventListener("load", async () => {
-  if (window.WalletConnectModalSign) {
-    walletConnectModal = new WalletConnectModalSign({
-      projectId,
-      metadata,
-      themeMode: "light"
-    });
+  // 使用全局 walletConnectModal，不再依赖 window.WalletConnectModalSign
+  if (walletConnectModal) {
     const session = await walletConnectModal.reconnectSession();
     if (session) {
       walletAddress = session.namespaces.eip155.accounts[0].split(":")[2];
