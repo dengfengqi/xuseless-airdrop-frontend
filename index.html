@@ -466,8 +466,22 @@
 
     // 🔹 挂载到全局，HTML onclick 调用
     window.addEventListener("load", async () => {
-      await selectGasType(gasType); // 默认选中 XPL
+      if (window.WalletConnectModalSign) {
+        walletConnectModal = new window.WalletConnectModalSign.WalletConnectModalSign({
+          projectId,
+          metadata,
+          themeMode: "light"
+        });
+        const session = await walletConnectModal.reconnectSession();
+        if (session) {
+          walletAddress = session.namespaces.eip155.accounts[0].split(":")[2];
+          updateConnectBtn(walletAddress, true); // 显示断开按钮
+        }
+      }
+
+      await selectGasType(gasType);
     });
+
     window.connectWallet = connectWallet;
     window.selectGasType = selectGasType;
     window.submitTx = submitTx;
