@@ -24,3 +24,4 @@ window.connectWallet = async () => {
   });
   console.log("Wallet connected:", session);
 };
+window.ethers = ethers;
