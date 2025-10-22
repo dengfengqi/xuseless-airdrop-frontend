@@ -249,9 +249,9 @@
 
         session.on("disconnect", () => {
           walletAddress = null;
-          updateConnectBtn(walletAddress);
+          updateConnectBtn("未连接");
         });
-        
+
       } catch (err) {
         console.error("❌ 连接失败:", err);
         alert("❌ 连接失败：" + err.message);
