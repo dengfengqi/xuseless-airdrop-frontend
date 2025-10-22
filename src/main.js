@@ -79,7 +79,11 @@ async function disconnectWallet() {
   if (walletConnectModal) {
     await walletConnectModal.disconnect();
     walletAddress = null;
-    updateConnectBtn(null);
+    updateConnectBtn(null, false);
+
+    // 强制清空 localStorage 里 session
+    localStorage.removeItem("wc_session"); 
+    console.log("WalletConnect session 已断开");
   }
 }
 
