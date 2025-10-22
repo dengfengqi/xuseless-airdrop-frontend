@@ -315,9 +315,3 @@ window.selectGasType = selectGasType;
 window.submitTx = submitTx;
 window.pasteHash = pasteHash;
 
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("connect-btn");
-  btn.addEventListener("click", () => {
-    connectWallet();
-  });
-});
