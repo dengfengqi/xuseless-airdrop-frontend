@@ -298,6 +298,7 @@ document.getElementById("manualCopy").addEventListener("click", async function (
 
 // 🔹 挂载到全局，HTML onclick 调用
 window.addEventListener("load", async () => {
+  updateConnectBtn(null, false);
   if (walletConnectModal) {
     const session = await walletConnectModal.reconnectSession();
     if (session) {
