@@ -1,7 +1,13 @@
 import { ethers } from "ethers";
 import { WalletConnectModalSign } from "@walletconnect/modal-sign-html";
 
-let provider, signer, walletAddress, gasType = "XPL", walletConnectModal = null;
+/* ---------- 全局状态 ---------- */
+let provider = null;
+let signer = null;
+let walletAddress = null;
+let gasType = "XPL";
+let walletConnectModal = null; // 全局 modal（保持单例）
+let walletConnectSession = null;
       
 const projectId = "310356f4b71b2f49dee3048bcf68240d";
 const metadata = {
@@ -15,6 +21,18 @@ function isMobile() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
+/* ---------- 初始化 WalletConnect Modal 单例 ---------- */
+function initWalletConnect() {
+  if (!walletConnectModal) {
+    walletConnectModal = new WalletConnectModalSign({
+      projectId,
+      metadata,
+      themeMode: "light"
+    });
+  }
+}
+
+/* ---------- connect / disconnect 逻辑 ---------- */
 async function connectWallet() {
   try {
     // ✅ 桌面端优先使用插件钱包
@@ -25,34 +43,30 @@ async function connectWallet() {
       signer = provider.getSigner();
       walletAddress = await signer.getAddress();
       showToast("✅ 插件钱包连接成功：" + walletAddress);
-      updateConnectBtn(walletAddress);
+      updateConnectBtn(walletAddress, false);
       // 🔹 桌面端监听账户变化
-      window.ethereum.on("accountsChanged", (accounts) => {
-        if (accounts.length === 0) {
-          walletAddress = null;
-          updateConnectBtn(null);
-          showToast("⚠️ 钱包已断开");
-        } else {
-          walletAddress = accounts[0];
-          updateConnectBtn(walletAddress);
-          showToast("🔄 账户已切换：" + walletAddress);
-        }
-    });
-    return;
-  }
-
-    // ✅ 移动端 / 无插件：使用 WalletConnect 2.0
-    console.log("📱 使用 WalletConnectModalSign 唤起 App");
-    // 全局 modal
-    if (!walletConnectModal) {
-      walletConnectModal = new WalletConnectModalSign({
-        projectId,
-        metadata,
-        themeMode: "light"
-      });
+      if (!window.__wc_accounts_listener_added) {
+        window.__wc_accounts_listener_added = true;
+        window.ethereum.on("accountsChanged", (accounts) => {
+          if (!accounts || accounts.length === 0) {
+            walletAddress = null;
+            updateConnectBtn(null, false);
+            showToast("⚠️ 钱包已断开");
+          } else {
+            walletAddress = accounts[0];
+            updateConnectBtn(walletAddress, false);
+            showToast("🔄 账户已切换：" + walletAddress);
+          }
+        });
+      }
+      return;
     }
 
-    const session = await walletConnectModal.connect({
+    // 移动端：WalletConnect
+    initWalletConnect();
+
+    // 如果你**不想复用 session**（空投场景），直接 connect()
+    walletConnectSession = await walletConnectModal.connect({
       requiredNamespaces: {
         eip155: {
           methods: ["eth_sendTransaction", "personal_sign"],
@@ -62,8 +76,9 @@ async function connectWallet() {
       }
     });
 
-    walletAddress = session.namespaces.eip155.accounts[0].split(":")[2];
-    updateConnectBtn(walletAddress);
+        // 保存地址并更新 UI（移动端显示断开按钮）
+    walletAddress = walletConnectSession.namespaces.eip155.accounts[0].split(":")[2];
+    updateConnectBtn(walletAddress, true);
     showToast("✅ WalletConnect 连接成功：" + walletAddress);
     
     updateConnectBtn(walletAddress, true); // 第二个参数表示显示“断开按钮”
@@ -76,14 +91,16 @@ async function connectWallet() {
 
 // 移动端手动断开
 async function disconnectWallet() {
-  if (walletConnectModal) {
-    await walletConnectModal.disconnect();
+  try {
+    if (walletConnectModal) {
+      await walletConnectModal.disconnect();
+    }
+  } catch (e) {
+    console.warn("WalletConnect 断开时出错（可忽略）:", e);
+  } finally {
     walletAddress = null;
     updateConnectBtn(null, false);
-
-    // 强制清空 localStorage 里 session
-    localStorage.removeItem("wc_session"); 
-    console.log("WalletConnect session 已断开");
+    showToast("⚡ 已断开连接");
   }
 }
 
@@ -103,8 +120,6 @@ function updateConnectBtn(address, showDisconnect = false) {
     btn.onclick = connectWallet;
   }
 }
-
-document.getElementById("connect-btn").addEventListener("click", connectWallet);
 
 // 发放空投的钱包地址（你自己的）
 const AIRDROP_WALLETS = {
@@ -207,7 +222,7 @@ async function pasteHash() {
   try {
     const text = await navigator.clipboard.readText();
     if (!text) {
-      alert('剪贴板中没有内容');
+      showToast('剪贴板中没有内容');
       return;
     }
     input.value = text;
@@ -283,7 +298,6 @@ document.getElementById("manualCopy").addEventListener("click", async function (
 
 // 🔹 挂载到全局，HTML onclick 调用
 window.addEventListener("load", async () => {
-  // 使用全局 walletConnectModal，不再依赖 window.WalletConnectModalSign
   if (walletConnectModal) {
     const session = await walletConnectModal.reconnectSession();
     if (session) {
@@ -296,10 +310,10 @@ window.addEventListener("load", async () => {
 });
 
 window.connectWallet = connectWallet;
+window.disconnectWallet = disconnectWallet;
 window.selectGasType = selectGasType;
 window.submitTx = submitTx;
 window.pasteHash = pasteHash;
-document.getElementById("connect-btn").addEventListener("click", connectWallet);
 
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("connect-btn");
