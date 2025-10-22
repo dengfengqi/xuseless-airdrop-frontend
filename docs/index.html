@@ -192,7 +192,7 @@
   </div>
 
   <script>
-    let provider, signer, walletAddress, gasType = "XPL";
+    let provider, signer, walletAddress, gasType = "XPL", walletConnectModal = null;
       
     const projectId = "310356f4b71b2f49dee3048bcf68240d";
     const metadata = {
@@ -217,8 +217,20 @@
           walletAddress = await signer.getAddress();
           showToast("✅ 插件钱包连接成功：" + walletAddress);
           updateConnectBtn(walletAddress);
-          return;
-        }
+          // 🔹 桌面端监听账户变化
+          window.ethereum.on("accountsChanged", (accounts) => {
+            if (accounts.length === 0) {
+              walletAddress = null;
+              updateConnectBtn(null);
+              showToast("⚠️ 钱包已断开");
+            } else {
+              walletAddress = accounts[0];
+              updateConnectBtn(walletAddress);
+              showToast("🔄 账户已切换：" + walletAddress);
+            }
+        });
+        return;
+      }
 
         // ✅ 移动端 / 无插件：使用 WalletConnect 2.0
         console.log("📱 使用 WalletConnectModalSign 唤起 App");
@@ -241,33 +253,38 @@
         walletAddress = session.namespaces.eip155.accounts[0].split(":")[2];
         updateConnectBtn(walletAddress);
         showToast("✅ WalletConnect 连接成功：" + walletAddress);
+        
+        updateConnectBtn(walletAddress, true); // 第二个参数表示显示“断开按钮”
+        
+        } catch (err) {
+          console.error("❌ 连接失败:", err);
+          showToast("❌ 连接失败：" + err.message);
+        }
+      }
 
-        // 监听账户变化
-        session.on("accountsChanged", (accounts) => {
-          walletAddress = accounts[0].split(":")[2];
-          updateConnectBtn(walletAddress);
-        });
-
-        session.on("disconnect", () => {
-          walletAddress = null;
-          updateConnectBtn("未连接");
-        });
-
-      } catch (err) {
-        console.error("❌ 连接失败:", err);
-        alert("❌ 连接失败：" + err.message);
+    // 移动端手动断开
+    async function disconnectWallet() {
+      if (walletConnectModal) {
+        await walletConnectModal.disconnect();
+        walletAddress = null;
+        updateConnectBtn(null);
       }
     }
 
-    // 缩写按钮地址函数定义
-    function updateConnectBtn(address) {
+    // 修改 updateConnectBtn 支持桌面/移动端不同显示
+    function updateConnectBtn(address, showDisconnect = false) {
       const btn = document.getElementById("connect-btn");
-      if (address && address.length > 0) {
-          btn.textContent = `已连接: ${address.slice(0,6)}...${address.slice(-4)}`;
-          btn.disabled = true; // 可选：连接后禁用按钮
+      if (address) {
+        btn.textContent = `已连接: ${address.slice(0,6)}...${address.slice(-4)}`;
+        btn.disabled = !showDisconnect; // 桌面端禁用按钮，移动端可点击断开
+        if (showDisconnect) {
+          btn.textContent += " (点击断开)";
+          btn.onclick = disconnectWallet;
+        }
       } else {
-          btn.textContent = "未连接";
-          btn.disabled = false; // 未连接时允许点击
+        btn.textContent = "🔗 连接钱包";
+        btn.disabled = false;
+        btn.onclick = connectWallet;
       }
     }
     
