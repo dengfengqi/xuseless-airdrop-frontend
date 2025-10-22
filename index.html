@@ -233,7 +233,7 @@
 
         // ✅ 移动端 / 无插件：使用 WalletConnect 2.0
         console.log("📱 使用 WalletConnectModalSign 唤起 App");
-        const modal = new window.WalletConnectModalSign.WalletConnectModalSign({
+        const modal = new WalletConnectModalSign({
           projectId,
           metadata,
           themeMode: "light"
@@ -467,7 +467,7 @@
     // 🔹 挂载到全局，HTML onclick 调用
     window.addEventListener("load", async () => {
       if (window.WalletConnectModalSign) {
-        walletConnectModal = new window.WalletConnectModalSign.WalletConnectModalSign({
+        walletConnectModal = new WalletConnectModalSign({
           projectId,
           metadata,
           themeMode: "light"
