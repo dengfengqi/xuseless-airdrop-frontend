@@ -13,15 +13,20 @@ const modal = new WalletConnectModalSign({
 });
 
 window.connectWallet = async () => {
-  const session = await modal.connect({
-    requiredNamespaces: {
-      eip155: {
-        methods: ["eth_sendTransaction", "personal_sign"],
-        chains: ["eip155:196"],
-        events: ["accountsChanged", "chainChanged"]
+  try {
+    const session = await modal.connect({
+      requiredNamespaces: {
+        eip155: {
+          methods: ["eth_sendTransaction", "personal_sign"],
+          chains: ["eip155:196"],
+          events: ["accountsChanged", "chainChanged"]
+        }
       }
-    }
-  });
-  console.log("Wallet connected:", session);
+    });
+    console.log("Wallet connected:", session);
+  } catch (err) {
+    console.error("连接失败", err);
+  }
 };
+
 window.ethers = ethers;
